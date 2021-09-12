@@ -3,7 +3,8 @@
 ### 简介
 这是一个简易的服务，为用户申请 MySQL 与 Redis 两类资源，采用resuful api的形式提供给用户使用，提供部分个性化配置。    
 基础服务使用flask框架，数据库使用sqlite3，使用token验证进行资源访问验证和查询，资源实例通过docker容器运行，请确保环境能正常进行docker pull并能正常使用docker。
-
+# 基本框架图
+![image](https://github.com/yukimur/resource_apply/blob/main/images/%E5%9F%BA%E6%9C%AC%E6%9E%B6%E6%9E%84%E5%9B%BE.png)
 ### 基本使用及案例
 1. 请确保本地环境安装了python3，sqlite3和docker；
 2. 本地执行命令拉取资源镜像
