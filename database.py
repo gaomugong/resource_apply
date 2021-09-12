@@ -6,7 +6,8 @@ from sqlalchemy import Column, Integer, String, JSON,ForeignKey
 from sqlalchemy.orm import relationship
 from utils import generate_id
 
-engine = create_engine('sqlite:////home/wb.pengjiayu/resource_apply/sql/data.db')
+DATABASEPAATH = "home/wb.pengjiayu/resource_apply/sql/data.db"  # 请写绝对路径
+engine = create_engine('sqlite:////{}'.format(DATABASEPAATH))
 db_session = scoped_session(sessionmaker(autocommit=False,
                                          autoflush=False,
                                          bind=engine))
@@ -41,10 +42,11 @@ class Resource(Base):
     config = Column(JSON, nullable=False)
     user_id = Column(Integer, ForeignKey('user.id'))
 
-    def __init__(self, resource,config,user_id):
+    def __init__(self, resource,config,user_id,container_id):
         self.resource = resource
         self.config = config
         self.user_id = user_id
+        self.container_id = container_id
 
     def __repr__(self):
         return '<Resource %r>' % self.resource

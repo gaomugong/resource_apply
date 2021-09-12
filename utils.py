@@ -36,6 +36,16 @@ def generate_id():
     uid = uuid.uuid1()
     return uid.hex
 
+def get_host_ip():
+    """获取本地id地址"""
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(('8.8.8.8', 80))
+        ip = s.getsockname()[0]
+    finally:
+        s.close()
+ 
+    return ip
 
 if __name__ == "__main__":
-    print(generate_id())
+    print(get_host_ip())

@@ -1,7 +1,7 @@
 
 import docker
 import threading
-from utils import singletonDecorator,get_free_port
+from utils import singletonDecorator,get_free_port,get_host_ip
 from docker.errors import ImageNotFound,NotFound 
 
 @singletonDecorator
@@ -25,7 +25,7 @@ class DockerManager(object):
         """查找容器"""
         try:
             container = self.client.containers.get(container_id)
-            return container.status 
+            return container 
         except NotFound as e:
             return False
 
@@ -34,13 +34,16 @@ class DockerManager(object):
         try:
             return self.client.images.pull(image_name)
         except Exception as e:
+            raise e
             return False
 
     def run(self,container_name,image_tag,config={}):
+        """运行容器"""
         params = {}
 
         # 端口映射
         inside_port = config.get("inside_port")
+        port = None
         if inside_port:
             port = get_free_port()
             ports = {"{}/tcp".format(inside_port): port}
@@ -54,28 +57,35 @@ class DockerManager(object):
         container = self.client.containers.run(image=image_tag,name=container_name,
                                       detach=True,**params)
         return {
-            "container":container,
-            "params":params
+            "container_id":container.id,
+            "addr":get_host_ip(),
+            "port":port,
+            "config":config
         }
 
     def stop(self,container):
+        """停止容器"""
         try:
-            self.client.containers.stop(container)
+            container = self.search_instance(container)
+            container.stop()
         except Exception as e:
             return
 
     def remove(self,container):
+        """删除容器"""
         try:
-            self.client.containers.remove(container)
+            container = self.search_instance(container)
+            container.remove()
         except Exception as e:
             return
 
     def remove_image(self,image_name):
+        """删除镜像"""
         self.client.images.remove(image_name)
 
     def create(self,image_name,tag,container_name,config={}):
         # 查找是否存在镜像
-        tag = tag if tag else "lastest"
+        tag = tag if tag else "latest"
         image_tag = "{}:{}".format(image_name,tag)
         if not self.search_image(image_tag):
             if not self.pull(image_tag):

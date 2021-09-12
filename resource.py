@@ -18,8 +18,8 @@ class Resource(object):
         try:
             self.docker_manager.stop(self.container_name)
             self.docker_manager.remove(self.container_name)
-        except:
-            pass
+        except Exception as e:
+            raise e
 
 class MysqlResource(Resource):
     def __init__(self,*args,**kargs):
@@ -28,38 +28,38 @@ class MysqlResource(Resource):
         self.tag = "5.7"
         self.container_name = generate_id()
         self.mysql_password = generate_id()
-        self.config = {
-            "environment":self.config
-        }
+
         self.config["inside_port"] = 3306
-        self.config["environment"]["MYSQL_ROOT_PASSWORD"] = self.mysql_password
+        self.config["environment"]= {
+            "MYSQL_ROOT_PASSWORD":self.mysql_password,
+            "MYSQL_DATABASE":self.config.pop("MYSQL_DATABASE")
+        }
 
     def create(self):
         container_data = super().create()
-        return {
-            "container_id":container_data["container"].id,
-            "port":container_data["params"].get("port")
-        }
+        container_data["MYSQL_USER"] = "root"
+        return container_data
 
 class RedisResource(Resource):
     def __init__(self,*args,**kargs):
         super(RedisResource,self).__init__(*args,**kargs)
         self.image_name = "redis"
-        self.tag = "lastest"
+        self.tag = "latest"
         self.container_name = generate_id()
         self.mysql_password = generate_id()
-        self.config = {
-            "environment":self.config
-        }
-        self.config["inside_port"] = 3306
-        self.config["environment"]["MYSQL_ROOT_PASSWORD"] = self.mysql_password
+
+        self.config["inside_port"] = 6379
+        self.config["--requirepass"] = self.mysql_password
 
     def create(self):
-        container = super().create()
-        return container
+        container_data = super().create()
+        return container_data
 
 if __name__ == "__main__":
-    resource = MysqlResource()
+    config = {
+        "MYSQL_DATABASE":"haha"
+    }
+    resource = MysqlResource(config)
     # resource = RedisResource()
     print(resource.create())
     resource.clear()

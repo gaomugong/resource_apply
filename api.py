@@ -54,10 +54,11 @@ class ResourceList(RS):
                 支持部分个性化配置\n
                 Mysql:
                     MYSQL_DATABASE：数据库名称
-                    --character-set-server
-                    --collation-server
+                    --character-set-server：默认编码
+                    --collation-server：排序规则
                     更多参数参考https://hub.docker.com/_/mysql
                 Redis:
+                    --maxmemory：最大内存
                     更多参数参考https://hub.docker.com/_/redis?tab=description&page=1&ordering=last_updated
               """,
               "required": False,
@@ -69,6 +70,7 @@ class ResourceList(RS):
     )
     @auth.login_required
     def post(self):
+        """资源申请"""
         data = request.json
         resource_name = data.get("resource_name")
         if not resource_name:
@@ -76,23 +78,26 @@ class ResourceList(RS):
         config = data.get("config",{})
 
         if resource_name == "mysql":
-            resource = MysqlResource()
+            resource_instance = MysqlResource(config)
         elif resource_name == "redis":
-            resource = RedisResource()
+            resource_instance = RedisResource(config)
         else:
             abort(400,"must choose mysql or redis!")
         
         try:
-            resource_info = resource.create()
+            resource_info = resource_instance.create()
         except Exception as e:
-            resource.clear()
+            resource_instance.clear()
             abort(500,e)
+
         res = {}
         user = auth.current_user()
-        resource = Resource(resource=resource_name,config=config,user_id=user.id)
+        container_id = resource_info.get("container_id")
+        resource = Resource(resource=resource_name,config=resource_info,user_id=user.id,container_id=container_id)
         db_session.add(resource)
         db_session.commit()
         res["id"] = resource.id
+        res["container_id"] = resource.container_id
         res["resource"] = resource.resource
         res["config"] = resource.config
         return res
